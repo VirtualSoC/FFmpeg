@@ -1341,6 +1341,9 @@ static int video_open(VideoState *is)
     return 0;
 }
 
+static int d_cnt;
+static double d_time;
+
 /* display the current picture, if any */
 static void video_display(VideoState *is)
 {
@@ -1354,6 +1357,18 @@ static void video_display(VideoState *is)
     else if (is->video_st)
         video_image_display(is);
     SDL_RenderPresent(renderer);
+
+    double l_time = av_gettime_relative() / 1000000.0;
+    if (d_time != 0 && (int)d_time < (int)l_time) { // beginning of new second. print fps last second
+        int secs = (int)l_time - (int)d_time;
+        for (int i = (int)d_time; i < (int)l_time; i++) {
+            av_log(NULL, AV_LOG_ERROR, "PERF: time %d fps: %f\n", i, (double)d_cnt / secs);
+        }
+        d_cnt = 0;
+    }
+    d_time = l_time;
+    d_cnt++;
+
 }
 
 static double get_clock(Clock *c)
